@@ -17,10 +17,6 @@ def hard_sigmoid(x):
     return T.clip(x, -1, 1)
 
 
-def glorot(n_in, n_hidden):
-    return np.sqrt(1.5 / (n_in + n_hidden))
-
-
 def binarize(W, deterministic=False, stochastic=False):
     assert deterministic or stochastic
     if deterministic:
@@ -40,7 +36,7 @@ def get_cost(output, target):
 
 # model
 N_IN = 2
-N_HIDDEN = 10
+N_HIDDEN = 20
 N_OUT = 1
 LEARNING_RATE = 0.01
 N_TEST = 5
@@ -101,5 +97,5 @@ for i in range(20000):
 
 print(test(X_data)[0])
 print(y_data)
-# print(get_binary_weights())
+print(get_binary_weights())
 print(get_intermediate_outputs(X_data))

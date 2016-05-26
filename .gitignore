@@ -1,0 +1,13 @@
+# pyc files aren't necessary
+*.pyc
+
+# the pycharm part isn't either
+.idea
+
+# large "data" files
+*.h5
+*.pkl
+*.txt
+*.dict
+*.model
+

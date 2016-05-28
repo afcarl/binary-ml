@@ -45,3 +45,16 @@ def to_ohe(x, n):
 def split_minibatch(x, minibatch_size):
     for i in range(x.shape[0] / minibatch_size):
         yield x[i*minibatch_size:(i+1)*minibatch_size]
+
+
+def shuffle_together(*what):
+    for i in range(1, len(what)): assert len(what[i]) == len(what[0])
+    p = np.random.permutation(len(what[0]))
+    return [x[p] for x in what]
+
+if __name__ == '__main__':
+    a = np.asarray([[1,2],[2,3],[3,4],[4,5],[5,6]])
+    b = np.asarray([[5,6],[4,5],[3,4],[2,3],[1,5]])
+    a, b = shuffle_together(a, b)
+    print(a)
+    print(b)

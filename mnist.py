@@ -77,17 +77,16 @@ train_func, test_func, grads_func, weights, int_output_func = get_mlp_model(n_in
 print('accuracy before training:', (test_func(test_X)[0].argmax(axis=1)==test_y.argmax(axis=1)).mean())
 
 print('training model...')
-nb_epoch = 10
+nb_epoch = 100
 nb_subepoch = 5
 batch_size = 32
-learning_rate = 0.001
+learning_rate = 0.01
 for i in range(nb_epoch):
     for j in range(nb_subepoch):
-        batch = lambda x: utils.split_minibatch(np.random.shuffle(x), batch_size)
+        train_X, train_y = utils.shuffle_together(train_X, train_y)
+        batch = lambda x: utils.split_minibatch(x, batch_size)
         err = [train_func(x, y, learning_rate)[0].mean() for x, y in zip(batch(train_X), batch(train_y))]
-        # for g in grads_func(train_X, train_y):
-        #     print(g.mean())
-        print('epoch:', i+1, 'subepoch:', j+1, 'average loss:', sum(err) / float(len(err)), 'learning rate:', learning_rate)
+        print('epoch:', i+1, 'subepoch:', j+1, 'average loss:', sum(err) / float(len(err)), 'learning rate:', learning_rate, 'gradients:',  '.join([str(np.absolute(g).mean()) for g in grads_func(train_X, train_y)]))
 
     # print(int_output_func(train_X[:5]))
     print('train accuracy:', (test_func(train_X)[0].argmax(axis=1)==train_y.argmax(axis=1)).mean())

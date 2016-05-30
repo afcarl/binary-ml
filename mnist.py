@@ -38,9 +38,7 @@ def get_mlp_model(n_in, n_out, n_layers=2, n_hidden=50):
 
     # binarized versions
     deterministic_binary_weights = [utils.binarize(w, mode='deterministic') for w in weights]
-    deterministic_binary_biases = [utils.binarize(b, mode='deterministic') for b in biases]
     stochastic_binary_weights = [utils.binarize(w, mode='stochastic') for w in weights]
-    stochastic_binary_biases = [utils.binarize(b, mode='stochastic') for b in biases]
 
     # variables
     lr = T.scalar(name='learning_rate')
@@ -48,11 +46,11 @@ def get_mlp_model(n_in, n_out, n_layers=2, n_hidden=50):
     y = T.matrix(name='y', dtype=theano.config.floatX)
 
     # generate outputs of mlps
-    d_outs = [utils.hard_sigmoid(T.dot(X, deterministic_binary_weights[0]) + deterministic_binary_biases[0])]
-    for w, b in zip(deterministic_binary_weights[1:], deterministic_binary_biases[1:]):
+    d_outs = [utils.hard_sigmoid(T.dot(X, deterministic_binary_weights[0]) + biases[0])]
+    for w, b in zip(deterministic_binary_weights[1:], biases[1:]):
         d_outs.append(utils.hard_sigmoid(T.dot(d_outs[-1], w) + b))
-    s_outs = [utils.hard_sigmoid(T.dot(X, stochastic_binary_weights[0]) + stochastic_binary_biases[0])]
-    for w, b in zip(stochastic_binary_weights[1:], stochastic_binary_biases[1:]):
+    s_outs = [utils.hard_sigmoid(T.dot(X, stochastic_binary_weights[0]) + biases[0])]
+    for w, b in zip(stochastic_binary_weights[1:], biases[1:]):
         s_outs.append(utils.hard_sigmoid(T.dot(s_outs[-1], w) + b))
 
     # cost function (see utils)
@@ -60,7 +58,7 @@ def get_mlp_model(n_in, n_out, n_layers=2, n_hidden=50):
 
     # get the update functions
     params = weights + biases
-    grads = [T.grad(cost, p) for p in stochastic_binary_weights + stochastic_binary_biases]
+    grads = [T.grad(cost, p) for p in stochastic_binary_weights + biases]
     updates = [(p, T.clip(p - lr * g, -1, 1)) for p, g in zip(params, grads)]
 
     # generate training and testing functions
@@ -72,12 +70,12 @@ def get_mlp_model(n_in, n_out, n_layers=2, n_hidden=50):
     return train_func, test_func, grads_func, weights + biases, int_output_func
 
 print('compiling model...')
-train_func, test_func, grads_func, weights, int_output_func = get_mlp_model(n_in, n_out, n_layers=2, n_hidden=50)
+train_func, test_func, grads_func, weights, int_output_func = get_mlp_model(n_in, n_out, n_layers=2, n_hidden=500)
 
 print('accuracy before training:', (test_func(test_X)[0].argmax(axis=1)==test_y.argmax(axis=1)).mean())
 
 print('training model...')
-nb_epoch = 100
+nb_epoch = 500
 nb_subepoch = 5
 batch_size = 32
 learning_rate = 0.01
@@ -86,10 +84,10 @@ for i in range(nb_epoch):
         train_X, train_y = utils.shuffle_together(train_X, train_y)
         batch = lambda x: utils.split_minibatch(x, batch_size)
         err = [train_func(x, y, learning_rate)[0].mean() for x, y in zip(batch(train_X), batch(train_y))]
-        print('epoch:', i+1, 'subepoch:', j+1, 'average loss:', sum(err) / float(len(err)), 'learning rate:', learning_rate, 'gradients:',  '.join([str(np.absolute(g).mean()) for g in grads_func(train_X, train_y)]))
+        print('epoch:', i+1, 'subepoch:', j+1, 'average loss:', sum(err) / float(len(err)), 'learning rate:', learning_rate, 'gradients:', ' '.join([str(np.absolute(g).mean()) for g in grads_func(train_X, train_y)]))
 
     # print(int_output_func(train_X[:5]))
-    print('train accuracy:', (test_func(train_X)[0].argmax(axis=1)==train_y.argmax(axis=1)).mean())
-    learning_rate *= 0.99
+    print('validation accuracy:', (test_func(valid_X)[0].argmax(axis=1)==valid_y.argmax(axis=1)).mean())
+    # learning_rate *= 0.99
 
 print('accuracy after training:', (test_func(test_X)[0].argmax(axis=1)==test_y.argmax(axis=1)).mean())
